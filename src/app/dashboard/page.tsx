@@ -5,24 +5,18 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { createBrowserClient } from "@supabase/ssr";
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import Watchlist from "./components/watchlist/Watchlist";
-import { User } from "@supabase/supabase-js";
 import { SelectedSymbolProvider } from "./contexts/selectedSymbol";
 import { WatchlistProvider } from "./contexts/watchlist";
-import Chart from "./components/chart/chart";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
-import { SymbolCandlesData } from "@/types/symbol-types";
-import { useSelectedSymbolState } from "../state/selecte-symbol";
+import { useSelectedSymbolState } from "../state/select-symbol";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,104 +28,135 @@ import {
   Table,
 } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useFilterSymbols } from "@/lib/utils";
+import { BACKEND_URL, cn, supabase, useFilterSymbols } from "@/lib/utils";
 import { useSymbolListState } from "../state/symbol-list";
-import { Label } from "@/components/ui/label";
-import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
-import { useChartSeriesState } from "../state/useChartSeriesState";
+import Holding from "./components/holding/holding";
+import ChartPanel, { ChartPanelRef } from "./components/chart/chartPanel";
+import { connect } from "socket.io-client";
+import { useUser } from "../state/user-state";
+import { Nav } from "@/components/Nav";
+import {
+  Archive,
+  ArchiveX,
+  Inbox,
+  Send,
+  Trash2,
+  File,
+  Home,
+  CandlestickChart,
+} from "lucide-react";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 
 export default function Dashboard() {
-  const { symbol, setSymbol } = useSelectedSymbolState();
-  const { symbolsList } = useSymbolListState();
+  const { user, setUser } = useUser();
+
+  const { setSymbol } = useSelectedSymbolState();
+
   const [symbolQuery, setSymbolQuery] = useState<string>("");
-  const [showAddSymbolDialog, setShowAddSymbolDialog] =
-    useState<boolean>(false);
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const { symbolsList } = useSymbolListState();
 
-  const [user, setUser] = useState<User | null>();
-  const { chartSeries } = useChartSeriesState();
-
-  useEffect(() => {
-    getUserData();
-  }, []);
-
-  async function getUserData() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    setUser(user);
-  }
-
-  const { data, isLoading } = useQuery({
-    queryKey: ["chart", symbol],
-    queryFn: async () => {
-      const { data }: { data: SymbolCandlesData[] } = await axios.get(
-        `/api/symbol/getSymbolChart?symbol=${symbol}.BO`
-      );
-      return data as SymbolCandlesData[];
-    },
-  });
-
-  useQuery({
-    queryKey: ["chartSeries"],
-    queryFn: async () => {
-      const { data }: { data: SymbolCandlesData[] } = await axios.get(
-        `/api/symbol/getSymbolChart?symbol=${symbol}.BO`
-      );
-      chartSeries.update(data[data.length - 1]);
-      return data as SymbolCandlesData[];
-    },
-    refetchInterval: 300,
-  });
-  // useChartDataStore;
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
 
   const { data: filteredSymbolsList, isLoading: filterSymbolsLoading } =
     useFilterSymbols(symbolQuery, symbolsList);
 
+  const chartPanelRef = useRef<ChartPanelRef>(null);
+
+  useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user == undefined) {
+        return;
+      }
+
+      setUser(user.id);
+      return user;
+    },
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
+  useQuery({
+    queryKey: ["fyersSocket", user],
+    queryFn: async () => {
+      if (user == undefined) {
+        return;
+      } else {
+        const fyersSocket = connect(BACKEND_URL! + "/fyers-socket", {
+          auth: { userId: user },
+        });
+        fyersSocket.on("connection", (message) => {
+          console.log("connected");
+        });
+        fyersSocket.on("positions", (message) => {
+          console.log("positions");
+          console.log(message);
+        });
+        fyersSocket.on("orders", (message) => {
+          console.log("orders");
+          console.log(message);
+        });
+        return;
+      }
+    },
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
+  function handlePanelResize(size: number, prevSize: number | undefined): void {
+    chartPanelRef.current?.handlePanelResize();
+  }
+
   return (
-    <Dialog open={showAddSymbolDialog} onOpenChange={setShowAddSymbolDialog}>
-      <div className="h-[93vh]">
-        <WatchlistProvider>
-          <SelectedSymbolProvider>
-            <ResizablePanelGroup
-              direction={"horizontal"}
-              onLayout={(sizes: number[]) => {
-                document.cookie = `react-resizable-panels:layout=${JSON.stringify(
-                  sizes
-                )}`;
-              }}
+    <Dialog>
+      <WatchlistProvider>
+        <SelectedSymbolProvider>
+          <ResizablePanelGroup
+            className="h-full "
+            direction={"horizontal"}
+            onLayout={(sizes: number[]) => {
+              document.cookie = `react-resizable-panels:layout=${JSON.stringify(
+                sizes
+              )}`;
+            }}
+          >
+            <ResizablePanel
+              className=" border-grey"
+              defaultSize={200}
+              onResize={handlePanelResize}
+              key={"chart"}
             >
-              <ResizablePanel
-                className="border-4 border-grey"
-                defaultSize={200}
+              <ResizablePanelGroup
+                direction={"vertical"}
+                onLayout={(sizes: number[]) => {
+                  document.cookie = `react-resizables-panels:layout=${JSON.stringify(
+                    sizes
+                  )}`;
+                }}
               >
-                <div id="chart-toolbar" className="border-b-4 p-1">
-                  <DialogTrigger onClick={() => setShowAddSymbolDialog(true)}>
-                    <Label className="text-md flex items-center gap-1 cursor-pointer hover:bg-gray-200 w-fit pr-2 pt-1 pl-1 pb-1">
-                      <MagnifyingGlassIcon className="w-5 h-5" /> {symbol}
-                    </Label>
-                  </DialogTrigger>
-                </div>
-                <div>
-                  {isLoading ? (
-                    <h1>Loading</h1>
-                  ) : (
-                    <Chart symbol={symbol} data={data} />
-                  )}
-                </div>
-              </ResizablePanel>
-              <ResizableHandle />
-              <ResizablePanel defaultSize={20} minSize={20}>
-                <Watchlist key={user?.id} />
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </SelectedSymbolProvider>
-        </WatchlistProvider>
-      </div>
+                <ResizablePanel
+                  className="border-grey h-full "
+                  defaultSize={200}
+                  key={"chart"}
+                  onResize={handlePanelResize}
+                >
+                  <ChartPanel ref={chartPanelRef} />
+                </ResizablePanel>
+                <ResizableHandle withHandle className="border-black " />
+                <Holding />
+              </ResizablePanelGroup>
+            </ResizablePanel>
+            <ResizableHandle withHandle className="border-black " />
+            <ResizablePanel defaultSize={20} minSize={20}>
+              <Watchlist key={user} />
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </SelectedSymbolProvider>
+      </WatchlistProvider>
       <DialogContent className="px-0 max-w-none w-[80vh] m-0">
         <DialogHeader className="p-1">
           <DialogTitle>Search Symbol</DialogTitle>
@@ -162,7 +187,6 @@ export default function Dashboard() {
                     key={symbol.symbol_Id}
                     onClick={() => {
                       setSymbol(symbol.symbol_Id);
-                      setShowAddSymbolDialog(false);
                     }}
                   >
                     <TableCell className="font-medium">

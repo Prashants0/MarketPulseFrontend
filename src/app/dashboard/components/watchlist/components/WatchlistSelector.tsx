@@ -45,7 +45,7 @@ import {
   useWatchlist,
 } from "@/app/dashboard/contexts/watchlist";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { supabase } from "@/components/supabase";
+import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 
 const create_watchlist = async (name: String) => {

@@ -49,9 +49,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     });
     if (error) {
       console.log(error);
-    } else {
-      console.log(data);
-    }
+    } 
   }
 
   // Password input

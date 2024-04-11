@@ -1,11 +1,7 @@
 import prisma from "@/lib/prisma";
 
 export async function POST(req: Request, res: Response) {
-  // let data = await req.json();
-  // console.log(data);
-
   const { watchlist_id, symbol } = await req.json();
-  console.log(watchlist_id);
 
   if (!watchlist_id) {
     return new Response("Watchlist Symbol Added", {

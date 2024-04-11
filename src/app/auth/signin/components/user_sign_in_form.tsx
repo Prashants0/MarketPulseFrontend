@@ -47,9 +47,7 @@ export function UserLogInForm({ className, ...props }: UserLogInForm) {
     });
     if (error) {
       console.log(error);
-    } else {
-      console.log(data);
-    }
+    } 
   }
 
   // Password input

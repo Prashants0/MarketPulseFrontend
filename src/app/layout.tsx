@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 import QueryClientProviderWrapper from "@/components/QueryClientProviderWrapper";
 import SymbolListWrapper from "@/components/SymbolListWrapper";
+import { Nav } from "@/components/Nav";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,15 +24,18 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={cn(
-          "min-h-screen font-sans antialiased grainy bg-gray-50",
+          "min-h-screen h-screen font-sans antialiased grainy relative bg-gray-50",
           inter.className
         )}
       >
         <QueryClientProviderWrapper>
           <SymbolListWrapper>
-            <Navbar />
+            {/* <Navbar /> */}
             <Toaster />
-            {children}
+            <div className="flex items-start justify-center h-full">
+              <Nav />
+              {children}
+            </div>
           </SymbolListWrapper>
         </QueryClientProviderWrapper>
       </body>

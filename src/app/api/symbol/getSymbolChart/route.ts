@@ -5,7 +5,6 @@ export async function GET(req: Request, res: Response) {
   const symbol = url.searchParams.get("symbol") as string;
 
   const { firstTradeDateMilliseconds } = await yahooFinance.quote(symbol);
-  console.log(firstTradeDateMilliseconds);
 
   const queryOptions = { period1: firstTradeDateMilliseconds as Date };
   const result = await yahooFinance.chart(symbol, queryOptions);

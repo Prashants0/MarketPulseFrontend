@@ -50,7 +50,7 @@ function Watchlist() {
     {
       queryKey: ["watchlist", watchlistId],
       queryFn: async () => {
-        if (!watchlistId) return;
+        if (!watchlistId) return [];
         const { data } = await axios.get(
           `/api/watchlist/getWatchlistSymbols?watchlist_id=${watchlistId}`,
           {
@@ -201,7 +201,6 @@ function Watchlist() {
               </TableBody>
             </Table>
           </ScrollArea>
-          <DialogFooter></DialogFooter>
         </DialogContent>
       </Dialog>
     </>

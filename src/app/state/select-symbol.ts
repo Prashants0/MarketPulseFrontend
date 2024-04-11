@@ -8,5 +8,5 @@ type SelectedSymbolState = {
 
 export const useSelectedSymbolState = create<SelectedSymbolState>()((set) => ({
   symbol: "HDFCBANK",
-  setSymbol: (symbols: string) => set({ symbol: symbols }),
+  setSymbol: (symbol: string) => set({ symbol: symbol }),
 }));

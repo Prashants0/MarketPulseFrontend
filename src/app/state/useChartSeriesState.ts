@@ -2,12 +2,12 @@ import { IChartApi, ISeriesApi } from "lightweight-charts";
 import { create } from "zustand";
 
 type chartApiRefStore = {
-  chartSeries: ISeriesApi<"Candlestick">;
-  setChartSeries: (chartSeries: ISeriesApi<"Candlestick">) => void;
+  chartSeries: ISeriesApi<"Candlestick"> | undefined;
+  setChartSeries: (chartSeries: ISeriesApi<"Candlestick"> | undefined) => void;
 };
 
 export const useChartSeriesState = create<chartApiRefStore>()((set) => ({
-  chartSeries: {} as ISeriesApi<"Candlestick">,
-  setChartSeries: (chartSeries: ISeriesApi<"Candlestick">) =>
+  chartSeries: undefined,
+  setChartSeries: (chartSeries: ISeriesApi<"Candlestick"> | undefined) =>
     set({ chartSeries: chartSeries }),
 }));
