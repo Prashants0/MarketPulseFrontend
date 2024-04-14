@@ -8,11 +8,17 @@ import { Separator } from "@/components/ui/separator";
 import { ClockIcon, InfoCircledIcon } from "@radix-ui/react-icons";
 import { TrendingUpIcon } from "lucide-react";
 
-export default function StrategyCard() {
+export default function StrategyCard({
+  StrategyName,
+  StrategyDescription,
+}: {
+  StrategyName: string;
+  StrategyDescription: string;
+}) {
   return (
-    <Card className="w-full max-w-xs">
+    <Card className="w-full max-w-xs h-[250px]">
       <CardContent className="flex justify-between text-left gap-1.5 p-3 items-center">
-        <div className="text-lg font-bold">Breakout</div>
+        <div className="text-lg font-bold">{StrategyName}</div>
         <div className="flex gap-2">
           <div className="text-sm">Long</div>
           <TrendingUpIcon className="w-4 h-4 text-gray-500" />
@@ -24,7 +30,7 @@ export default function StrategyCard() {
           <ClockIcon className="w-4 h-4 text-gray-500" />
           <div className="text-sm font-medium">Time frame</div>
         </div>
-        <div className="text-sm">1H (1 hour)</div>
+        <div className="text-sm">5m (5 minute)</div>
       </CardContent>
       <Separator />
       <CardContent className="flex flex-col text-left gap-1.5 p-4">
@@ -32,10 +38,7 @@ export default function StrategyCard() {
           <InfoCircledIcon className="w-4 h-4 text-gray-500" />
           <div className="text-sm font-medium">Description</div>
         </div>
-        <div className="text-sm">
-          The breakout strategy aims to take advantage of significant price
-          movements following periods of consolidation.
-        </div>
+        <div className="text-sm">{StrategyDescription}</div>
       </CardContent>
     </Card>
   );

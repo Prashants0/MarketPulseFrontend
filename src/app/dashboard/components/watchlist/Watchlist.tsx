@@ -6,7 +6,7 @@ import { MinusIcon, PlusCircledIcon } from "@radix-ui/react-icons";
 import { useWatchlist } from "../../contexts/watchlist";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { Watchlist_items, bse_symbol } from "@prisma/client";
+import { Watchlist_items } from "@prisma/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import SymbolBar from "./components/SymbolBar";
 import {
@@ -66,8 +66,10 @@ function Watchlist() {
 
   //add a symbol from the watchlist
   const { mutate: addWatchlistSymbol } = useMutation({
-    mutationKey: ["addWatchlist"],
+    mutationKey: ["addWatchlist", watchlistId],
     mutationFn: async (symbol: string) => {
+      console.log(watchlistId);
+
       await axios.post("/api/watchlist/addSymbolToWatchlist", {
         watchlist_id: watchlistId,
         symbol: symbol,
@@ -136,7 +138,7 @@ function Watchlist() {
         <ScrollArea className="h-full">
           {watchlistSymbols &&
             watchlistSymbols.map((symbol) => (
-              <SymbolBar key={symbol.id} symbol_name={symbol.symbol} />
+              <SymbolBar key={symbol.id} symbol_id={symbol.symbol_id} />
             ))}
         </ScrollArea>
         <DialogContent className="px-0 max-w-none w-[80vh] m-0">
@@ -155,6 +157,7 @@ function Watchlist() {
                 <TableRow>
                   <TableHead className="w-[100px]">Symbol</TableHead>
                   <TableHead>Comapny Name</TableHead>
+                  <TableHead>Exchange</TableHead>
                   <TableHead className="text-right"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -165,19 +168,20 @@ function Watchlist() {
                   </TableRow>
                 ) : (
                   filteredSymbolsList?.map((symbol) => (
-                    <TableRow key={symbol.symbol_Id}>
+                    <TableRow key={symbol.id}>
                       <TableCell className="font-medium">
-                        {symbol.symbol_Id}
+                        {symbol.symbol}
                       </TableCell>
-                      <TableCell>{symbol.issuer_name}</TableCell>
+                      <TableCell>{symbol.security_name}</TableCell>
+                      <TableCell>{symbol.exchange}</TableCell>
                       <TableCell className="flex items-end justify-end">
                         {watchlistSymbols &&
                         watchlistSymbols.some((watchlistSymbol) => {
-                          return symbol.symbol_Id == watchlistSymbol.symbol;
+                          return symbol.id == watchlistSymbol.symbol_id;
                         }) ? (
                           <Button
                             onClick={() => {
-                              deleteWatchlistSymbol(symbol.symbol_Id);
+                              deleteWatchlistSymbol(symbol.id);
                             }}
                             variant={"destructive"}
                             className=" h-6 rounded-[5px] flex items-center justify-between"
@@ -187,7 +191,7 @@ function Watchlist() {
                           </Button>
                         ) : (
                           <Button
-                            onClick={() => addWatchlistSymbol(symbol.symbol_Id)}
+                            onClick={() => addWatchlistSymbol(symbol.id)}
                             className=" h-6 rounded-[5px] flex items-center justify-between"
                           >
                             <span className="mr-1">Add</span>

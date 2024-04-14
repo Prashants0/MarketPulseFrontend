@@ -37,7 +37,7 @@ export type ChartPanelRef = {
 };
 
 const ChartPanel = forwardRef<ChartPanelRef>((props, ref) => {
-  const { symbol } = useSelectedSymbolState();
+  const { symbol, symbolId, exchange } = useSelectedSymbolState();
 
   const { chartSeries } = useChartSeriesState();
   const { chart } = useChartState();
@@ -45,10 +45,10 @@ const ChartPanel = forwardRef<ChartPanelRef>((props, ref) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["chart", symbol],
+    queryKey: ["chart", symbolId],
     queryFn: async () => {
       const { data }: { data: SymbolCandlesData[] } = await axios.get(
-        `/api/symbol/getSymbolChart?symbol=${symbol}.NS`
+        `/api/symbol/getSymbolChart?symbol=${symbolId}`
       );
       return data as SymbolCandlesData[];
     },
@@ -59,7 +59,7 @@ const ChartPanel = forwardRef<ChartPanelRef>((props, ref) => {
     queryFn: async () => {
       if (chartSeries != undefined) {
         const { data }: { data: SymbolCandlesData[] } = await axios.get(
-          `/api/symbol/getSymbolChart?symbol=${symbol}.NS`
+          `/api/symbol/getSymbolChart?symbol=${symbolId}`
         );
 
         chartSeries.update(data[data.length - 1]);

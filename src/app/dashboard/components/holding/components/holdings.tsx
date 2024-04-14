@@ -23,6 +23,7 @@ export type HoldingType = {
   dayChange: number;
   dayChangePercent: number;
   marketValue: number;
+  exchange: string;
 };
 
 const Holdings = () => {
@@ -43,6 +44,7 @@ const Holdings = () => {
       return holdingsResponse.data as HoldingType[];
     },
   });
+
   if (isLoading) {
     return <div>Loading...</div>;
   }

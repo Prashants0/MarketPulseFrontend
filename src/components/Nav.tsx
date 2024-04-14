@@ -11,6 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import Image from "next/image";
 
 type LinksType = {
   title: string;
@@ -36,6 +37,14 @@ export function Nav() {
     <TooltipProvider>
       <div className="group flex flex-col gap-6 py-2 items-center border-r h-screen">
         <nav className="flex-col flex gap-4 px-2 justify-center self-center items-center">
+          <div>
+            <Image
+              width={35}
+              height={35}
+              src="/marketpulse.png"
+              alt="marketpulse"
+            />
+          </div>
           {links.map((link, index) => (
             <Tooltip key={index} delayDuration={0}>
               <TooltipTrigger asChild>

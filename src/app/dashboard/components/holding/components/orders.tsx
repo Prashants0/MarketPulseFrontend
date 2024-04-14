@@ -24,6 +24,7 @@ export type OrderType = {
   stopPrice: number;
   productType: String;
   orderDateTime: String;
+  id: number;
 };
 
 const Orders = () => {
@@ -38,10 +39,13 @@ const Orders = () => {
         push("/auth/signin");
         return [];
       }
-      const holdingsResponse = await axios.get(
+      const ordersResponse = await axios.get(
         `${BACKEND_URL}/user/orders?userId=${user.id}`
       );
-      return holdingsResponse.data as OrderType[];
+      for (let i = 0; i < ordersResponse.data.length; i++) {
+        ordersResponse.data[i].id = i;
+      }
+      return ordersResponse.data as OrderType[];
     },
   });
   if (isLoading) {
@@ -67,9 +71,7 @@ const Orders = () => {
           </TableHeader>
           <TableBody>
             {orders &&
-              orders.map((order) => (
-                <OrdersBar key={order.symbol} order={order} />
-              ))}
+              orders.map((order) => <OrdersBar key={order.id} order={order} />)}
           </TableBody>
         </Table>
       </ScrollArea>

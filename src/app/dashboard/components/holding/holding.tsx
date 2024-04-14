@@ -2,8 +2,9 @@ import { ResizablePanel } from "@/components/ui/resizable";
 import { useState } from "react";
 import Holdings from "./components/holdings";
 import Orders from "./components/orders";
+import PortfolioOptionChecker from "./components/portfolioOptionChecker";
 
-enum holdingOption {
+export enum HoldingOption {
   Holdings = "Holdings",
   Positions = "Positions",
   Orders = "Orders",
@@ -11,7 +12,7 @@ enum holdingOption {
 
 const Holding = () => {
   const [selectedHoldingOption, setSelectedHoldingOption] =
-    useState<holdingOption>(holdingOption.Holdings);
+    useState<HoldingOption>(HoldingOption.Holdings);
   return (
     <ResizablePanel
       className="border-grey flex flex-col h-full"
@@ -21,9 +22,9 @@ const Holding = () => {
       <div className="border-b-2 flex">
         <div className="flex-row flex justify-betweens">
           <span
-            onClick={() => setSelectedHoldingOption(holdingOption.Holdings)}
+            onClick={() => setSelectedHoldingOption(HoldingOption.Holdings)}
             className={`text-center text-md hover:bg-slate-200 hover:cursor-pointer px-4 py-2 flex-auto border-l-2 ${
-              selectedHoldingOption == holdingOption.Holdings
+              selectedHoldingOption == HoldingOption.Holdings
                 ? "bg-gray-200 border-b"
                 : ""
             }`}
@@ -31,9 +32,9 @@ const Holding = () => {
             Holdings
           </span>
           <span
-            onClick={() => setSelectedHoldingOption(holdingOption.Positions)}
+            onClick={() => setSelectedHoldingOption(HoldingOption.Positions)}
             className={`text-center text-md hover:bg-gray-200 hover:cursor-pointer px-4 py-2 flex-auto border-l-2 border-x-black  ${
-              selectedHoldingOption == holdingOption.Positions
+              selectedHoldingOption == HoldingOption.Positions
                 ? "bg-gray-200 border-b"
                 : ""
             }`}
@@ -41,9 +42,9 @@ const Holding = () => {
             Positions
           </span>
           <span
-            onClick={() => setSelectedHoldingOption(holdingOption.Orders)}
+            onClick={() => setSelectedHoldingOption(HoldingOption.Orders)}
             className={`text-center text-md hover:bg-gray-200 hover:cursor-pointer px-4 py-2 flex-auto border-l-2 border-x-black  ${
-              selectedHoldingOption == holdingOption.Orders
+              selectedHoldingOption == HoldingOption.Orders
                 ? "bg-gray-200 border-b"
                 : ""
             }`}
@@ -53,11 +54,7 @@ const Holding = () => {
         </div>
       </div>
       <div className="h-full">
-        {selectedHoldingOption == holdingOption.Holdings && <Holdings />}
-        {selectedHoldingOption == holdingOption.Positions && (
-          <div>Positions</div>
-        )}
-        {selectedHoldingOption == holdingOption.Orders && <Orders />}
+        <PortfolioOptionChecker holdingOption={selectedHoldingOption} />
       </div>
     </ResizablePanel>
   );

@@ -1,12 +1,12 @@
-import { bse_symbol } from "@prisma/client";
+import { symbol_list } from "@prisma/client";
 import { create } from "zustand";
 
 type SymbolListState = {
-  symbolsList: bse_symbol[];
-  setSymbols: (symbolsList: bse_symbol[]) => void;
+  symbolsList: symbol_list[];
+  setSymbols: (symbolsList: symbol_list[]) => void;
 };
 
 export const useSymbolListState = create<SymbolListState>()((set) => ({
   symbolsList: [],
-  setSymbols: (symbols: bse_symbol[]) => set({ symbolsList: symbols }),
+  setSymbols: (symbols: symbol_list[]) => set({ symbolsList: symbols }),
 }));

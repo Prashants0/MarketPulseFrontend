@@ -50,13 +50,11 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 export default function Dashboard() {
   const { user, setUser } = useUser();
 
-  const { setSymbol } = useSelectedSymbolState();
+  const { setSymbol, setExchange, setSymbolId } = useSelectedSymbolState();
 
   const [symbolQuery, setSymbolQuery] = useState<string>("");
 
   const { symbolsList } = useSymbolListState();
-
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
 
   const { data: filteredSymbolsList, isLoading: filterSymbolsLoading } =
     useFilterSymbols(symbolQuery, symbolsList);
@@ -165,7 +163,7 @@ export default function Dashboard() {
           value={symbolQuery}
           onChange={(e) => setSymbolQuery(e.target.value)}
           className="rounded-none focus-visible:ring-offset-0 focus-visible:ring-0 py-1 my-0"
-          placeholder="Watchlist name"
+          placeholder="Symbol name"
         />
         <ScrollArea className="h-[50vh]">
           <Table>
@@ -173,6 +171,7 @@ export default function Dashboard() {
               <TableRow>
                 <TableHead className="w-[100px]">Symbol</TableHead>
                 <TableHead>Comapny Name</TableHead>
+                <TableHead>Exchange</TableHead>
                 <TableHead className="text-right"></TableHead>
               </TableRow>
             </TableHeader>
@@ -184,15 +183,18 @@ export default function Dashboard() {
               ) : (
                 filteredSymbolsList?.map((symbol) => (
                   <TableRow
-                    key={symbol.symbol_Id}
+                    key={symbol.id}
                     onClick={() => {
-                      setSymbol(symbol.symbol_Id);
+                      setSymbolId(symbol.id);
+                      setExchange(symbol.exchange!);
+                      setSymbol(symbol.symbol);
                     }}
                   >
                     <TableCell className="font-medium">
-                      {symbol.symbol_Id}
+                      {symbol.symbol}
                     </TableCell>
-                    <TableCell>{symbol.issuer_name}</TableCell>
+                    <TableCell>{symbol.security_name}</TableCell>
+                    <TableCell>{symbol.exchange}</TableCell>
                   </TableRow>
                 ))
               )}

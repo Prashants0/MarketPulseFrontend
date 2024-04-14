@@ -1,14 +1,28 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import { createChart, ColorType, ISeriesApi } from "lightweight-charts";
-import { SymbolCandlesData } from "@/types/symbol-types";
+import {
+  createChart,
+  ColorType,
+  ISeriesApi,
+  SeriesMarker,
+  Time,
+} from "lightweight-charts";
+import { SymbolCandlesData, SymbolEmaRsiData } from "@/types/symbol-types";
 import { useChartSeriesState } from "@/app/state/useChartSeriesState";
 import { useChartState } from "@/app/state/Chart-state";
 
-const Chart = (props: {
+export enum StrategyTypeEnum {
+  EMA = 1,
+  MACD = 2,
+  RSI = 3,
+  VWAP = 4,
+}
+
+const BacktestChart = (props: {
+  data: SymbolEmaRsiData[];
   symbol: string;
-  data: any;
+  strategyType: StrategyTypeEnum;
   colors?:
     | {
         backgroundColor?: "white" | undefined;
@@ -44,6 +58,39 @@ const Chart = (props: {
       });
     };
 
+    const markers = [] as SeriesMarker<Time>[];
+    let ema1 = [];
+    let ema2 = [];
+    let ema3 = [];
+    let rsi = [];
+    if (props.strategyType == StrategyTypeEnum.EMA) {
+      for (let i = 0; i < data.length; i++) {
+        console.log(data[i].signal);
+
+        if (data[i].signal == "buy") {
+          markers.push({
+            time: data[i].time,
+            position: "belowBar",
+            color: "#2196F3",
+            shape: "arrowUp",
+            text: "Buy",
+          });
+        } else if (data[i].signal == "sell") {
+          markers.push({
+            time: data[i].time,
+            position: "aboveBar",
+            color: "#e91e63",
+            shape: "arrowDown",
+            text: "Sell",
+          });
+        }
+        ema1.push({ time: data[i].time, value: data[i].ema1 });
+        ema2.push({ time: data[i].time, value: data[i].ema2 });
+        ema3.push({ time: data[i].time, value: data[i].ema3 });
+        rsi.push({ time: data[i].time, value: data[i].rsi });
+      }
+    }
+
     const chart = createChart(chartContainerRef.current!, {
       layout: {
         background: { type: ColorType.Solid, color: backgroundColor },
@@ -63,6 +110,15 @@ const Chart = (props: {
       rightOffset: 20,
     });
 
+    const ema1Series = chart.addLineSeries({ color: "#2962FF", lineWidth: 1 });
+    ema1Series.setData(ema1);
+
+    const ema2Series = chart.addLineSeries({ color: "#26a69a", lineWidth: 1 });
+    ema2Series.setData(ema2);
+
+    const ema3Series = chart.addLineSeries({ color: "#ef5350", lineWidth: 1 });
+    ema3Series.setData(ema3);
+
     const newSeries = chart.addCandlestickSeries({
       upColor: "#26a69a",
       downColor: "#ef5350",
@@ -72,7 +128,8 @@ const Chart = (props: {
     });
     setChartSeries(newSeries);
 
-    newSeries.setData(data as SymbolCandlesData[]);
+    newSeries.setData(data as SymbolEmaRsiData[]);
+    newSeries.setMarkers(markers);
 
     window.addEventListener("resize", handleResize);
 
@@ -81,7 +138,15 @@ const Chart = (props: {
       setChartSeries(undefined);
       chart.remove();
     };
-  }, [setChartSeries, symbol, data, setChart, backgroundColor, textColor]);
+  }, [
+    setChartSeries,
+    symbol,
+    data,
+    setChart,
+    backgroundColor,
+    textColor,
+    props.strategyType,
+  ]);
   return (
     <>
       <div
@@ -99,4 +164,4 @@ const Chart = (props: {
   );
 };
 
-export default Chart;
+export default BacktestChart;

@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 
 export async function POST(req: Request, res: Response) {
   const { watchlist_id, symbol } = await req.json();
+  console.log(watchlist_id);
 
   if (!watchlist_id) {
     return new Response("Watchlist Symbol Added", {
@@ -15,7 +16,7 @@ export async function POST(req: Request, res: Response) {
   await prisma.watchlist_items.create({
     data: {
       watchlist_id: watchlist_id,
-      symbol: symbol,
+      symbol_id: symbol,
     },
   });
   return new Response("Watchlist Symbol Added", {

@@ -7,49 +7,7 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
-  schemas   = ["auth", "public", "storage"]
-}
-
-model bse_symbol {
-  issuer_name     String
-  symbol_Id       String            @id
-  security_name   String
-  group           String
-  face_value      Float
-  isin_no         String?
-  industry        String?
-  instrument      String?
-  sector_name     String?
-  industry_name   String?
-  igroup_name     String?
-  isubgroup_name  String?
-  Watchlist_items Watchlist_items[]
-
-  @@schema("public")
-}
-
-model Watchlists {
-  watchlist_id    String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id         String            @db.Uuid
-  created_at      DateTime          @default(now())
-  name            String
-  num_of_symbols  Int               @default(0)
-  Watchlist_items Watchlist_items[]
-  user            users             @relation(fields: [user_id], references: [id])
-
-  @@schema("public")
-}
-
-model Watchlist_items {
-  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  watchlist_id String     @db.Uuid
-  symbol       String
-  added_at     DateTime   @default(now())
-  bse_symbols  bse_symbol @relation(fields: [symbol], references: [symbol_Id])
-  watchlist    Watchlists @relation(fields: [watchlist_id], references: [watchlist_id])
-
-  @@unique([symbol, watchlist_id])
-  @@schema("public")
+  schemas   = ["auth", "public"]
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -77,6 +35,7 @@ model flow_state {
   created_at             DateTime?             @db.Timestamptz(6)
   updated_at             DateTime?             @db.Timestamptz(6)
   authentication_method  String
+  auth_code_issued_at    DateTime?             @db.Timestamptz(6)
   saml_relay_states      saml_relay_states[]
 
   @@index([created_at(sort: Desc)])
@@ -102,6 +61,76 @@ model identities {
   @@index([email])
   @@index([user_id])
   @@schema("auth")
+}
+
+enum Broker {
+  Fyers
+  Upstox
+
+  @@schema("public")
+}
+
+model user_trading_strategy {
+  user               users        @relation(fields: [usersId], references: [id])
+  usersId            String       @unique @db.Uuid
+  id                 String       @id @unique @db.Uuid
+  strategy           Int?
+  symbol_list        symbol_list? @relation(fields: [symbol_id], references: [id])
+  qutanity           Int?
+  symbol_id          String?      @db.Uuid
+  timeframe          String?
+  liveStatus         Boolean?
+  targetPercentage   Float?
+  stoplossPercentage Float?
+
+  @@schema("public")
+}
+
+model users_broker_profile {
+  user          users  @relation(fields: [usersId], references: [id])
+  usersId       String @id @unique @db.Uuid
+  broker        Broker
+  holdings      Json[]
+  access_token  String
+  refresh_token String
+
+  @@schema("public")
+}
+
+model symbol_list {
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  symbol        String
+  security_name String
+  isin_no       String?
+  exchange      String?
+
+  Watchlist_items       Watchlist_items[]
+  user_trading_strategy user_trading_strategy[]
+
+  @@schema("public")
+}
+
+model Watchlists {
+  watchlist_id    String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id         String            @db.Uuid
+  created_at      DateTime          @default(now())
+  name            String
+  num_of_symbols  Int               @default(0)
+  Watchlist_items Watchlist_items[]
+  user            users             @relation(fields: [user_id], references: [id])
+
+  @@schema("public")
+}
+
+model Watchlist_items {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  watchlist_id String      @db.Uuid
+  symbol_id    String      @db.Uuid
+  added_at     DateTime    @default(now())
+  symbol_list  symbol_list @relation(fields: [symbol_id], references: [id])
+  watchlist    Watchlists  @relation(fields: [watchlist_id], references: [watchlist_id])
+
+  @@schema("public")
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -191,6 +220,7 @@ model saml_providers {
   attribute_mapping Json?
   created_at        DateTime?     @db.Timestamptz(6)
   updated_at        DateTime?     @db.Timestamptz(6)
+  name_id_format    String?
   sso_providers     sso_providers @relation(fields: [sso_provider_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([sso_provider_id])
@@ -205,7 +235,6 @@ model saml_relay_states {
   request_id      String
   for_email       String?
   redirect_to     String?
-  from_ip_address String?       @db.Inet
   created_at      DateTime?     @db.Timestamptz(6)
   updated_at      DateTime?     @db.Timestamptz(6)
   flow_state_id   String?       @db.Uuid
@@ -282,108 +311,51 @@ model sso_providers {
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model users {
-  instance_id                 String?               @db.Uuid
-  id                          String                @id @db.Uuid
-  aud                         String?               @db.VarChar(255)
-  role                        String?               @db.VarChar(255)
-  email                       String?               @db.VarChar(255)
-  encrypted_password          String?               @db.VarChar(255)
-  email_confirmed_at          DateTime?             @db.Timestamptz(6)
-  invited_at                  DateTime?             @db.Timestamptz(6)
-  confirmation_token          String?               @db.VarChar(255)
-  confirmation_sent_at        DateTime?             @db.Timestamptz(6)
-  recovery_token              String?               @db.VarChar(255)
-  recovery_sent_at            DateTime?             @db.Timestamptz(6)
-  email_change_token_new      String?               @db.VarChar(255)
-  email_change                String?               @db.VarChar(255)
-  email_change_sent_at        DateTime?             @db.Timestamptz(6)
-  last_sign_in_at             DateTime?             @db.Timestamptz(6)
+  instance_id                 String?                @db.Uuid
+  id                          String                 @id @db.Uuid
+  aud                         String?                @db.VarChar(255)
+  role                        String?                @db.VarChar(255)
+  email                       String?                @db.VarChar(255)
+  encrypted_password          String?                @db.VarChar(255)
+  email_confirmed_at          DateTime?              @db.Timestamptz(6)
+  invited_at                  DateTime?              @db.Timestamptz(6)
+  confirmation_token          String?                @db.VarChar(255)
+  confirmation_sent_at        DateTime?              @db.Timestamptz(6)
+  recovery_token              String?                @db.VarChar(255)
+  recovery_sent_at            DateTime?              @db.Timestamptz(6)
+  email_change_token_new      String?                @db.VarChar(255)
+  email_change                String?                @db.VarChar(255)
+  email_change_sent_at        DateTime?              @db.Timestamptz(6)
+  last_sign_in_at             DateTime?              @db.Timestamptz(6)
   raw_app_meta_data           Json?
   raw_user_meta_data          Json?
   is_super_admin              Boolean?
-  created_at                  DateTime?             @db.Timestamptz(6)
-  updated_at                  DateTime?             @db.Timestamptz(6)
-  phone                       String?               @unique
-  phone_confirmed_at          DateTime?             @db.Timestamptz(6)
-  phone_change                String?               @default("")
-  phone_change_token          String?               @default("") @db.VarChar(255)
-  phone_change_sent_at        DateTime?             @db.Timestamptz(6)
-  confirmed_at                DateTime?             @default(dbgenerated("LEAST(email_confirmed_at, phone_confirmed_at)")) @db.Timestamptz(6)
-  email_change_token_current  String?               @default("") @db.VarChar(255)
-  email_change_confirm_status Int?                  @default(0) @db.SmallInt
-  banned_until                DateTime?             @db.Timestamptz(6)
-  reauthentication_token      String?               @default("") @db.VarChar(255)
-  reauthentication_sent_at    DateTime?             @db.Timestamptz(6)
-  is_sso_user                 Boolean               @default(false)
-  deleted_at                  DateTime?             @db.Timestamptz(6)
+  created_at                  DateTime?              @db.Timestamptz(6)
+  updated_at                  DateTime?              @db.Timestamptz(6)
+  phone                       String?                @unique
+  phone_confirmed_at          DateTime?              @db.Timestamptz(6)
+  phone_change                String?                @default("")
+  phone_change_token          String?                @default("") @db.VarChar(255)
+  phone_change_sent_at        DateTime?              @db.Timestamptz(6)
+  confirmed_at                DateTime?              @default(dbgenerated("LEAST(email_confirmed_at, phone_confirmed_at)")) @db.Timestamptz(6)
+  email_change_token_current  String?                @default("") @db.VarChar(255)
+  email_change_confirm_status Int?                   @default(0) @db.SmallInt
+  banned_until                DateTime?              @db.Timestamptz(6)
+  reauthentication_token      String?                @default("") @db.VarChar(255)
+  reauthentication_sent_at    DateTime?              @db.Timestamptz(6)
+  is_sso_user                 Boolean                @default(false)
+  deleted_at                  DateTime?              @db.Timestamptz(6)
+  is_anonymous                Boolean                @default(false)
   identities                  identities[]
   mfa_factors                 mfa_factors[]
   sessions                    sessions[]
-  Watchlists                  Watchlists[]
+  user_trading_strategy       user_trading_strategy?
   users_broker_profile        users_broker_profile?
+  Watchlists                  Watchlists[]
 
   @@index([instance_id])
+  @@index([is_anonymous])
   @@schema("auth")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model buckets {
-  id                 String    @id
-  name               String    @unique(map: "bname")
-  owner              String?   @db.Uuid
-  created_at         DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at         DateTime? @default(now()) @db.Timestamptz(6)
-  public             Boolean?  @default(false)
-  avif_autodetection Boolean?  @default(false)
-  file_size_limit    BigInt?
-  allowed_mime_types String[]
-  owner_id           String?
-  objects            objects[]
-
-  @@schema("storage")
-}
-
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model migrations {
-  id          Int       @id
-  name        String    @unique @db.VarChar(100)
-  hash        String    @db.VarChar(40)
-  executed_at DateTime? @default(now()) @db.Timestamp(6)
-
-  @@schema("storage")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model objects {
-  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  bucket_id        String?
-  name             String?
-  owner            String?   @db.Uuid
-  created_at       DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at       DateTime? @default(now()) @db.Timestamptz(6)
-  last_accessed_at DateTime? @default(now()) @db.Timestamptz(6)
-  metadata         Json?
-  path_tokens      String[]  @default(dbgenerated("string_to_array(name, '/'::text)"))
-  version          String?
-  owner_id         String?
-  buckets          buckets?  @relation(fields: [bucket_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "objects_bucketId_fkey")
-
-  @@unique([bucket_id, name], map: "bucketid_objname")
-  @@index([name], map: "name_prefix_search")
-  @@schema("storage")
-}
-
-model users_broker_profile {
-  usersId       String @unique @db.Uuid
-  broker        Broker
-  holdings      Json
-  access_token  String
-  refresh_token String
-  users         users  @relation(fields: [usersId], references: [id])
-
-  @@schema("public")
 }
 
 enum aal_level {
@@ -413,11 +385,4 @@ enum factor_type {
   webauthn
 
   @@schema("auth")
-}
-
-enum Broker {
-  Fyers
-  Upstox
-
-  @@schema("public")
 }

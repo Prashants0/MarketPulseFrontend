@@ -2,12 +2,24 @@ import yahooFinance from "yahoo-finance2";
 
 export async function GET(req: Request, res: Response) {
   const url = new URL(req.url);
-  const symbol = url.searchParams.get("symbol") as string;
+  const symbolId = url.searchParams.get("symbol") as string;
 
+  const symbolData = await prisma?.symbol_list.findFirst({
+    where: {
+      id: symbolId,
+    },
+  });
+
+  let exchangeSymbol = "NS";
+  if (symbolData?.exchange == "NSE") {
+    exchangeSymbol = "NS";
+  } else if (symbolData?.exchange == "BSE") {
+    exchangeSymbol = "BO";
+  }
+  const symbol = `${symbolData?.symbol}.${exchangeSymbol}`;
   const { firstTradeDateMilliseconds } = await yahooFinance.quote(symbol);
-
   const queryOptions = { period1: firstTradeDateMilliseconds as Date };
-  const result = await yahooFinance.chart(symbol, queryOptions);
+  const result = await yahooFinance.chart(`${symbol}`, queryOptions);
   const structedResult = result.quotes.map((data) => {
     return {
       time: data.date.toISOString().split("T")[0],

@@ -11,32 +11,38 @@ const HoldingsBar = ({ holding }: { holding: HoldingType }) => {
   const [holdingSymbolData, setHoldingSymbolData] =
     useState<HoldingType>(holding);
   const { isLoading } = useQuery({
-    queryKey: ["holding", holding.symbol],
+    queryKey: ["holding", holding.symbol, holding.exchange],
     queryFn: async () => {
-      const { data: qutoe } = await axios.post(
-        `${BACKEND_URL}/api/symbol/get_quote`,
+      try {
+        const { data: qutoe } = await axios.post(
+          `${BACKEND_URL}/api/symbol/get_quote`,
+          {
+            symbol: holding.symbol,
+            exchange: holding.exchange,
+            type: "holding",
+          }
+        );
         {
-          symbol: holding.symbol,
-        }
-      );
-      {
-        if (qutoe.change > 0) {
-          setSymbolChangeStatusCss("text-green-400");
-        }
-        if (qutoe.change < 0) {
-          setSymbolChangeStatusCss("text-red-400");
-        }
-        if (qutoe.change === 0) {
-          setSymbolChangeStatusCss("text-gray-400");
-        }
-        holding.ltp = qutoe.price;
-        holding.dayChange = qutoe.change;
-        holding.dayChangePercent = qutoe.changePercent;
-        holding.marketValue = qutoe.price * holding.quantity;
+          if (qutoe.change > 0) {
+            setSymbolChangeStatusCss("text-green-400");
+          }
+          if (qutoe.change < 0) {
+            setSymbolChangeStatusCss("text-red-400");
+          }
+          if (qutoe.change === 0) {
+            setSymbolChangeStatusCss("text-gray-400");
+          }
+          holding.ltp = qutoe.price;
+          holding.dayChange = qutoe.change;
+          holding.dayChangePercent = qutoe.changePercent;
+          holding.marketValue = qutoe.price * holding.quantity;
 
-        setHoldingSymbolData(holding);
+          setHoldingSymbolData(holding);
+        }
+        return holding;
+      } catch (error) {
+        console.log(error);
       }
-      return holding;
     },
     refetchInterval: 300,
   });
