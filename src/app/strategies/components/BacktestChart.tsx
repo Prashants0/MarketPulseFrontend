@@ -13,7 +13,7 @@ import { useChartSeriesState } from "@/app/state/useChartSeriesState";
 import { useChartState } from "@/app/state/Chart-state";
 
 export enum StrategyTypeEnum {
-  EMA = 1,
+  MOMO = 1,
   MACD = 2,
   RSI = 3,
   VWAP = 4,
@@ -63,7 +63,7 @@ const BacktestChart = (props: {
     let ema2 = [];
     let ema3 = [];
     let rsi = [];
-    if (props.strategyType == StrategyTypeEnum.EMA) {
+    if (props.strategyType == StrategyTypeEnum.RSI) {
       for (let i = 0; i < data.length; i++) {
         console.log(data[i].signal);
 
@@ -129,6 +129,8 @@ const BacktestChart = (props: {
     setChartSeries(newSeries);
 
     newSeries.setData(data as SymbolEmaRsiData[]);
+    console.log(markers);
+
     newSeries.setMarkers(markers);
 
     window.addEventListener("resize", handleResize);

@@ -7,6 +7,7 @@ import { CardContent, Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ClockIcon, InfoCircledIcon } from "@radix-ui/react-icons";
 import { TrendingUpIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function StrategyCard({
   StrategyName,
@@ -16,7 +17,7 @@ export default function StrategyCard({
   StrategyDescription: string;
 }) {
   return (
-    <Card className="w-full max-w-xs h-[250px]">
+    <Card>
       <CardContent className="flex justify-between text-left gap-1.5 p-3 items-center">
         <div className="text-lg font-bold">{StrategyName}</div>
         <div className="flex gap-2">

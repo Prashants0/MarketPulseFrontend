@@ -72,7 +72,7 @@ const Page = () => {
         data[i].symbol = symbolData.symbol;
         data[i].security_name = symbolData.security_name;
         data[i].exchange = symbolData.exchange;
-        data[i].id = symbolData.id;
+        data[i].symbolId = symbolData.id;
       }
       return data as UserStrategyListItem[];
     },
@@ -88,6 +88,7 @@ const Page = () => {
             {userStrategiesData?.map((strategy) => (
               <UserStrategy
                 key={strategy.id}
+                id={strategy.id}
                 strategyTypeId={Number(strategy.strategy!)}
                 symbolName={strategy.symbol}
                 exchange={strategy.exchange}

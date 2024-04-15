@@ -6,16 +6,25 @@
 import { Badge } from "@/components/ui/badge";
 import { CardContent, Card } from "@/components/ui/card";
 import { BarChartIcon, CheckIcon, ClockIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function UserStrategy({
+  id,
   strategyTypeId,
   symbolName,
   exchange,
 }: {
+  id: string;
   strategyTypeId: number;
   symbolName: string;
   exchange: string;
 }) {
+  const { push } = useRouter();
+  function handleStrategyCardClick(
+    event: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ): void {
+    push(`/strategies/${id}`);
+  }
   let strategyName = "";
   if (strategyTypeId == 1) {
     strategyName = "MOMO";
@@ -27,7 +36,10 @@ export default function UserStrategy({
     strategyName = "EMA and Vwap";
   }
   return (
-    <Card className="w-full max-w-[250px] ">
+    <Card
+      className="w-full max-w-[250px] hover:cursor-pointer"
+      onClick={handleStrategyCardClick}
+    >
       <CardContent className="p-6">
         <div className="flex items-center">
           <div className="flex items-center">

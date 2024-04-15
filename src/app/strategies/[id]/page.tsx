@@ -40,13 +40,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import BacktestChart, { StrategyTypeEnum } from "../components/BacktestChart";
-import PercentageInput from "@/components/ui/percentage-Input";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
+import { symbol_list, user_trading_strategy } from "@prisma/client";
 
 const Page = ({ params }: { params: { id: string } }) => {
   const { toast } = useToast();
   const { push } = useRouter();
+  const [liveStatus, setLiveStatus] = useState<boolean>(false);
   const [symbol, setSymbol] = React.useState<string>("");
   const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
   const [symbolId, setSymbolId] = React.useState<string>("");
@@ -68,6 +69,55 @@ const Page = ({ params }: { params: { id: string } }) => {
   const { data: filteredSymbolsList, isLoading: filterSymbolsLoading } =
     useFilterSymbols(symbolQuery, symbolsList);
 
+  const { data: strategyData, isLoading: strategyLoading } = useQuery({
+    queryKey: ["strategyDeployment", params.id],
+    queryFn: async () => {
+      const user = await supabase.auth.getUser();
+      const { data, status }: { data: user_trading_strategy; status: number } =
+        await axios.get(`/api/stratergy/getStrategy`, {
+          params: {
+            user_id: user.data.user?.id,
+            strategy_id: params.id,
+          },
+        });
+      if (status === 200 && data) {
+        setSymbolId(data.symbol_id!);
+        setTargetPercentage(String(data.targetPercentage!));
+        setStopLossPercentage(String(data.stoplossPercentage!));
+        setQuantity(data.qutanity!);
+        if (data.strategy == StrategyTypeEnum.MOMO) {
+          setStrategyType("MOMO");
+        } else if (data.strategy == StrategyTypeEnum.MACD) {
+          setStrategyType("EMA, MACD, and Bollinger Bands");
+        } else if (data.strategy == StrategyTypeEnum.RSI) {
+          setStrategyType("EMA ,RSI");
+        } else if (data.strategy == StrategyTypeEnum.RSI) {
+          setStrategyType("EMA and Vwap");
+        }
+        const {
+          data: symbolData,
+          status: symbolStatus,
+        }: { data: symbol_list; status: number } = await axios.get(
+          `/api/symbol/getSymbolDetail?symbol_id=${data.symbol_id}`
+        );
+        setLiveStatus(data.liveStatus!);
+
+        if (symbolStatus === 200 && symbolData) {
+          setSymbolId(symbolData.id);
+          setExchange(symbolData.exchange!);
+          setSymbol(symbolData.symbol);
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.",
+            description: "Failed to fetch symbol data",
+            duration: 5000,
+          });
+        }
+      }
+      return data as user_trading_strategy;
+    },
+  });
   const { data, mutate } = useMutation({
     mutationKey: ["strategyDeployment", params.id],
     mutationFn: async () => {
@@ -93,6 +143,24 @@ const Page = ({ params }: { params: { id: string } }) => {
       setTotalLossTrades(calculateTotalLossTrades(data));
     },
   });
+
+  async function stopDeployStrategyHandler(): Promise<void> {
+    const user = await supabase.auth.getUser();
+    if (user.data.user == undefined) {
+      push("/auth/signin");
+      return;
+    }
+    if (symbolId == "" || exchange == "") {
+      return;
+    }
+    if (strategyType == "") {
+      return;
+    }
+    await axios.post(`${BACKEND_URL}/api/strategy/stopDeployment`, {
+      strategyId: params.id,
+    });
+  }
+
   async function deployStrategyHandler(): Promise<void> {
     const user = await supabase.auth.getUser();
     if (user.data.user == undefined) {
@@ -241,13 +309,23 @@ const Page = ({ params }: { params: { id: string } }) => {
               placeholder=""
             />
           </div>
-          <Button
-            variant="default"
-            className="mt-5"
-            onClick={deployStrategyHandler}
-          >
-            Deploy Strategy
-          </Button>
+          {liveStatus ? (
+            <Button
+              variant="destructive"
+              className="mt-5"
+              onClick={stopDeployStrategyHandler}
+            >
+              Stop Deployment
+            </Button>
+          ) : (
+            <Button
+              variant="default"
+              className="mt-5"
+              onClick={deployStrategyHandler}
+            >
+              Deploy Strategy
+            </Button>
+          )}
         </div>
         <Separator />
         <div className="h-full flex-col w-full">
@@ -280,7 +358,7 @@ const Page = ({ params }: { params: { id: string } }) => {
               <BacktestChart
                 symbol={symbol}
                 data={backtestData}
-                strategyType={StrategyTypeEnum.EMA}
+                strategyType={StrategyTypeEnum.RSI}
               ></BacktestChart>
             }
           </div>
