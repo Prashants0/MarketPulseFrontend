@@ -2,7 +2,8 @@ import { ResizablePanel } from "@/components/ui/resizable";
 import { useState } from "react";
 import Holdings from "./components/holdings";
 import Orders from "./components/orders";
-import PortfolioOptionChecker from "./components/portfolioOptionChecker";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Positions from "./components/postions";
 
 export enum HoldingOption {
   Holdings = "Holdings",
@@ -19,42 +20,23 @@ const Holding = () => {
       defaultSize={100}
       key={"holdings"}
     >
-      <div className="border-b-2 flex">
-        <div className="flex-row flex justify-betweens">
-          <span
-            onClick={() => setSelectedHoldingOption(HoldingOption.Holdings)}
-            className={`text-center text-md hover:bg-slate-200 hover:cursor-pointer px-4 py-2 flex-auto border-l-2 ${
-              selectedHoldingOption == HoldingOption.Holdings
-                ? "bg-gray-200 border-b"
-                : ""
-            }`}
-          >
-            Holdings
-          </span>
-          <span
-            onClick={() => setSelectedHoldingOption(HoldingOption.Positions)}
-            className={`text-center text-md hover:bg-gray-200 hover:cursor-pointer px-4 py-2 flex-auto border-l-2 border-x-black  ${
-              selectedHoldingOption == HoldingOption.Positions
-                ? "bg-gray-200 border-b"
-                : ""
-            }`}
-          >
-            Positions
-          </span>
-          <span
-            onClick={() => setSelectedHoldingOption(HoldingOption.Orders)}
-            className={`text-center text-md hover:bg-gray-200 hover:cursor-pointer px-4 py-2 flex-auto border-l-2 border-x-black  ${
-              selectedHoldingOption == HoldingOption.Orders
-                ? "bg-gray-200 border-b"
-                : ""
-            }`}
-          >
-            Orders
-          </span>
-        </div>
-      </div>
-      <div className="h-full">
-        <PortfolioOptionChecker holdingOption={selectedHoldingOption} />
+      <div className="h-full w-full">
+        <Tabs defaultValue="holdings" className="w-full h-full">
+          <TabsList>
+            <TabsTrigger value="holdings">Holdings</TabsTrigger>
+            <TabsTrigger value="positions">Positions</TabsTrigger>
+            <TabsTrigger value="orders">Orders</TabsTrigger>
+          </TabsList>
+          <TabsContent value="holdings" className="h-[80%]">
+            <Holdings />
+          </TabsContent>
+          <TabsContent value="positions" className="h-full">
+            <Positions />
+          </TabsContent>
+          <TabsContent value="orders" className="h-[80%]">
+            <Orders />
+          </TabsContent>
+        </Tabs>
       </div>
     </ResizablePanel>
   );

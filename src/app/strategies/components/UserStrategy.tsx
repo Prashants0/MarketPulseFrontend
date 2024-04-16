@@ -13,11 +13,13 @@ export default function UserStrategy({
   strategyTypeId,
   symbolName,
   exchange,
+  liveStatus,
 }: {
   id: string;
   strategyTypeId: number;
   symbolName: string;
   exchange: string;
+  liveStatus: boolean;
 }) {
   const { push } = useRouter();
   function handleStrategyCardClick(
@@ -35,6 +37,8 @@ export default function UserStrategy({
   } else if (strategyTypeId == 4) {
     strategyName = "EMA and Vwap";
   }
+  console.log(symbolName);
+
   return (
     <Card
       className="w-full max-w-[250px] hover:cursor-pointer"
@@ -45,10 +49,17 @@ export default function UserStrategy({
           <div className="flex items-center">
             <span className="text-lg font-semibold">{strategyName}</span>
           </div>
-          <Badge className="ml-4 bg-primary dark:bg-gray-800 border-gray-100 dark:border-gray-800 text-gray-900 dark:text-gray-100 justify-between">
-            <CheckIcon className="w-3 h-3" />
-            Live
-          </Badge>
+          {liveStatus ? (
+            <Badge className="ml-4 bg-primary dark:bg-gray-800 border-gray-100 dark:border-gray-800 text-gray-900 dark:text-gray-100 justify-between">
+              <CheckIcon className="w-3 h-3" />
+              Live
+            </Badge>
+          ) : (
+            <Badge className="ml-4 bg-ghost dark:bg-gray-800 border-gray-100 dark:border-gray-800 text-gray-900 dark:text-gray-100 justify-between">
+              <CheckIcon className="w-3 h-3" />
+              Live
+            </Badge>
+          )}
         </div>
         <div className="mt-4 grid gap-1.5 text-xs text-gray-500 dark:text-gray-400">
           <div className="flex items-center gap-1.5">

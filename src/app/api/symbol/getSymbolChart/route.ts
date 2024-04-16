@@ -3,7 +3,7 @@ import yahooFinance from "yahoo-finance2";
 export async function GET(req: Request, res: Response) {
   const url = new URL(req.url);
   const symbolId = url.searchParams.get("symbol") as string;
-
+  yahooFinance._opts.cookieJar?.removeAllCookiesSync();
   const symbolData = await prisma?.symbol_list.findFirst({
     where: {
       id: symbolId,
@@ -17,8 +17,15 @@ export async function GET(req: Request, res: Response) {
     exchangeSymbol = "BO";
   }
   const symbol = `${symbolData?.symbol}.${exchangeSymbol}`;
-  const { firstTradeDateMilliseconds } = await yahooFinance.quote(symbol);
-  const queryOptions = { period1: firstTradeDateMilliseconds as Date };
+  const date = new Date().getTime();
+  const currentTimestamp = Math.floor(Date.now() / 1000);
+
+  const secondsIn60Days = 5 * 360 * 24 * 60 * 60;
+
+  const sixMonthsAgo = new Date((currentTimestamp - secondsIn60Days) * 1000);
+  const queryOptions = {
+    period1: sixMonthsAgo,
+  };
   const result = await yahooFinance.chart(`${symbol}`, queryOptions);
   const structedResult = result.quotes.map((data) => {
     return {

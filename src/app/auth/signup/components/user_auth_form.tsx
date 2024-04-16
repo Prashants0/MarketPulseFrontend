@@ -43,13 +43,11 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     const { data, error } = await supabase.auth.signUp({
       email: email,
       password: password,
-      options: {
-        emailRedirectTo: "https//example.com/welcome",
-      },
     });
     if (error) {
       console.log(error);
-    } 
+    } else {
+    }
   }
 
   // Password input

@@ -5,7 +5,7 @@ import { type ClassValue, clsx } from "clsx";
 import exp from "constants";
 import { twMerge } from "tailwind-merge";
 
-export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

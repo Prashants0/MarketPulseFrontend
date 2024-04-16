@@ -50,6 +50,9 @@ const ChartPanel = forwardRef<ChartPanelRef>((props, ref) => {
       const { data }: { data: SymbolCandlesData[] } = await axios.get(
         `/api/symbol/getSymbolChart?symbol=${symbolId}`
       );
+      if (data.length == 0) {
+        return [];
+      }
       return data as SymbolCandlesData[];
     },
   });

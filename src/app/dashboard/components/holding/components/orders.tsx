@@ -9,9 +9,10 @@ import { BACKEND_URL, supabase } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import React from "react";
+import React, { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OrdersBar from "./ordersBar";
+import { useFyersSocketState } from "@/app/state/fyers-socket";
 
 export type OrderType = {
   symbol: string;
@@ -29,8 +30,13 @@ export type OrderType = {
 
 const Orders = () => {
   const { push } = useRouter();
-  const { data: orders, isLoading } = useQuery({
-    queryKey: ["holdings"],
+  const { fyersSocket } = useFyersSocketState();
+  const {
+    data: orders,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["orders"],
     queryFn: async () => {
       const {
         data: { user },
@@ -48,13 +54,30 @@ const Orders = () => {
       return ordersResponse.data as OrderType[];
     },
   });
+
+  useQuery({
+    queryKey: ["fyersSocket"],
+    queryFn: async () => {
+      if (fyersSocket == undefined) {
+        return;
+      } else {
+        fyersSocket.on("orders", (message) => {
+          console.log("orders");
+          refetch();
+        });
+      }
+    },
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
   return (
     <>
       <ScrollArea className="h-full">
-        <Table>
+        <Table key={"orders"}>
           <TableHeader>
             <TableRow>
               <TableHead>Symbol</TableHead>
@@ -69,7 +92,7 @@ const Orders = () => {
               <TableHead>Message</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody key={"orders"}>
             {orders &&
               orders.map((order) => <OrdersBar key={order.id} order={order} />)}
           </TableBody>

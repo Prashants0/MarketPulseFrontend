@@ -52,9 +52,7 @@ export function Nav() {
                   href={link.link}
                   className={cn(
                     buttonVariants({
-                      variant: window.location.href.includes(link.link)
-                        ? "default"
-                        : "ghost",
+                      variant: "ghost",
                       size: "icon",
                     }),
                     "h-11 w-11",

@@ -1,10 +1,12 @@
 import MaxWidthrapper from "@/components/MaxWidthrapper";
 import React from "react";
 import BrokerSelection from "./components/BrokerSelection";
+import Navbar from "@/components/Navbar";
 
 const page = () => {
   return (
     <>
+      <Navbar />
       <MaxWidthrapper>
         <div className="container relative h-[800px]  flex-col items-center justify-center grid px-0">
           <div className="lg:p-8 sm:p-2 w-[50vh]">

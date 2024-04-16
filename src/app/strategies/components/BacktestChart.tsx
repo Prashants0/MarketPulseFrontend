@@ -8,19 +8,23 @@ import {
   SeriesMarker,
   Time,
 } from "lightweight-charts";
-import { SymbolCandlesData, SymbolEmaRsiData } from "@/types/symbol-types";
+import {
+  SymbolCandlesData,
+  SymbolEmaRsiData,
+  SymbolEmaVwapData,
+} from "@/types/symbol-types";
 import { useChartSeriesState } from "@/app/state/useChartSeriesState";
 import { useChartState } from "@/app/state/Chart-state";
 
 export enum StrategyTypeEnum {
   MOMO = 1,
-  MACD = 2,
+  crossover = 2,
   RSI = 3,
   VWAP = 4,
 }
 
 const BacktestChart = (props: {
-  data: SymbolEmaRsiData[];
+  data: SymbolEmaRsiData[] | SymbolEmaVwapData[];
   symbol: string;
   strategyType: StrategyTypeEnum;
   colors?:
@@ -62,34 +66,6 @@ const BacktestChart = (props: {
     let ema1 = [];
     let ema2 = [];
     let ema3 = [];
-    let rsi = [];
-    if (props.strategyType == StrategyTypeEnum.RSI) {
-      for (let i = 0; i < data.length; i++) {
-        console.log(data[i].signal);
-
-        if (data[i].signal == "buy") {
-          markers.push({
-            time: data[i].time,
-            position: "belowBar",
-            color: "#2196F3",
-            shape: "arrowUp",
-            text: "Buy",
-          });
-        } else if (data[i].signal == "sell") {
-          markers.push({
-            time: data[i].time,
-            position: "aboveBar",
-            color: "#e91e63",
-            shape: "arrowDown",
-            text: "Sell",
-          });
-        }
-        ema1.push({ time: data[i].time, value: data[i].ema1 });
-        ema2.push({ time: data[i].time, value: data[i].ema2 });
-        ema3.push({ time: data[i].time, value: data[i].ema3 });
-        rsi.push({ time: data[i].time, value: data[i].rsi });
-      }
-    }
 
     const chart = createChart(chartContainerRef.current!, {
       layout: {
@@ -110,14 +86,90 @@ const BacktestChart = (props: {
       rightOffset: 20,
     });
 
-    const ema1Series = chart.addLineSeries({ color: "#2962FF", lineWidth: 1 });
-    ema1Series.setData(ema1);
+    if (
+      props.strategyType == StrategyTypeEnum.RSI ||
+      props.strategyType == StrategyTypeEnum.crossover ||
+      props.strategyType == StrategyTypeEnum.MOMO
+    ) {
+      for (let i = 0; i < data.length; i++) {
+        let dataItem = data[i] as SymbolEmaRsiData;
+        if (data[i].signal == "buy") {
+          markers.push({
+            time: data[i].time,
+            position: "belowBar",
+            color: "#2196F3",
+            shape: "arrowUp",
+            text: "Buy",
+          });
+        } else if (data[i].signal == "sell") {
+          markers.push({
+            time: data[i].time,
+            position: "aboveBar",
+            color: "#e91e63",
+            shape: "arrowDown",
+            text: "Sell",
+          });
+        }
+        ema1.push({ time: dataItem.time, value: dataItem.ema1 });
+        ema2.push({ time: dataItem.time, value: dataItem.ema2 });
+        ema3.push({ time: dataItem.time, value: dataItem.ema3 });
+      }
 
-    const ema2Series = chart.addLineSeries({ color: "#26a69a", lineWidth: 1 });
-    ema2Series.setData(ema2);
+      const ema1Series = chart.addLineSeries({
+        color: "#2962FF",
+        lineWidth: 1,
+      });
+      ema1Series.setData(ema1);
 
-    const ema3Series = chart.addLineSeries({ color: "#ef5350", lineWidth: 1 });
-    ema3Series.setData(ema3);
+      const ema2Series = chart.addLineSeries({
+        color: "#26a69a",
+        lineWidth: 1,
+      });
+      ema2Series.setData(ema2);
+
+      const ema3Series = chart.addLineSeries({
+        color: "#ef5350",
+        lineWidth: 1,
+      });
+      ema3Series.setData(ema3);
+    }
+    if (props.strategyType == StrategyTypeEnum.VWAP) {
+      let vwap = [];
+      for (let i = 0; i < data.length; i++) {
+        let dataItem = data[i] as SymbolEmaVwapData;
+        if (data[i].signal == "buy") {
+          markers.push({
+            time: data[i].time,
+            position: "belowBar",
+            color: "#2196F3",
+            shape: "arrowUp",
+            text: "Buy",
+          });
+        } else if (data[i].signal == "sell") {
+          markers.push({
+            time: data[i].time,
+            position: "aboveBar",
+            color: "#e91e63",
+            shape: "arrowDown",
+            text: "Sell",
+          });
+        }
+        ema1.push({ time: dataItem.time, value: dataItem.ema1 });
+        vwap.push({ time: dataItem.time, value: dataItem.vwap });
+      }
+      console.log(vwap, "vwap");
+
+      const ema1Series = chart.addLineSeries({
+        color: "#26a69a",
+        lineWidth: 1,
+      });
+      ema1Series.setData(ema1);
+      const vwapSeries = chart.addLineSeries({
+        color: "#ef5350",
+        lineWidth: 1,
+      });
+      vwapSeries.setData(vwap);
+    }
 
     const newSeries = chart.addCandlestickSeries({
       upColor: "#26a69a",
@@ -129,7 +181,6 @@ const BacktestChart = (props: {
     setChartSeries(newSeries);
 
     newSeries.setData(data as SymbolEmaRsiData[]);
-    console.log(markers);
 
     newSeries.setMarkers(markers);
 

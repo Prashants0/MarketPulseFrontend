@@ -30,7 +30,6 @@ const Chart = (props: {
       areaBottomColor = "rgba(41, 98, 255, 0.28)",
     } = {},
   } = props;
-
   const chartContainerRef = useRef<HTMLDivElement>();
   const chartLegendRef = useRef<HTMLDivElement>();
   const { setChartSeries } = useChartSeriesState();

@@ -48,10 +48,12 @@ const Holdings = () => {
   if (isLoading) {
     return <div>Loading...</div>;
   }
+  console.log(holdings);
+
   return (
     <>
       <ScrollArea className="h-full">
-        <Table>
+        <Table key={"holdings"} className="h-full">
           <TableHeader>
             <TableRow>
               <TableHead>Symbol</TableHead>
@@ -63,7 +65,7 @@ const Holdings = () => {
               <TableHead>Market Value</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody key={"holdings"}>
             {holdings &&
               holdings.map((holding) => (
                 <HoldingsBar key={holding.symbol} holding={holding} />

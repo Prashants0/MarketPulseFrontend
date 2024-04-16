@@ -43,6 +43,7 @@ import BacktestChart, { StrategyTypeEnum } from "../components/BacktestChart";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { symbol_list, user_trading_strategy } from "@prisma/client";
+import { Nav } from "@/components/Nav";
 
 const Page = ({ params }: { params: { id: string } }) => {
   const { toast } = useToast();
@@ -52,14 +53,15 @@ const Page = ({ params }: { params: { id: string } }) => {
   const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
   const [symbolId, setSymbolId] = React.useState<string>("");
   const [exchange, setExchange] = React.useState<string>("");
-  const [strategyType, setStrategyType] =
-    React.useState<string>("Select Strategy");
+  const [strategyType, setStrategyType] = React.useState<string>("Momo");
   const [targetPercentage, setTargetPercentage] = React.useState<string>("0.0");
   const [stopLossPercentage, setStopLossPercentage] =
     React.useState<string>("0.0");
   const [symbolQuery, setSymbolQuery] = useState<string>("");
   const { symbolsList } = useSymbolListState();
-  const [strategy, setStrategy] = useState<string>("");
+  const [strategy, setStrategy] = useState<StrategyTypeEnum>(
+    StrategyTypeEnum.MOMO
+  );
   const [backtestData, setBacktestData] = useState<SymbolEmaRsiData[]>([]);
   const [totalTrades, setTotalTrades] = useState<number>(0);
   const [totalProfitTrades, setTotalProfitTrades] = useState<number>(0);
@@ -87,12 +89,16 @@ const Page = ({ params }: { params: { id: string } }) => {
         setQuantity(data.qutanity!);
         if (data.strategy == StrategyTypeEnum.MOMO) {
           setStrategyType("MOMO");
-        } else if (data.strategy == StrategyTypeEnum.MACD) {
-          setStrategyType("EMA, MACD, and Bollinger Bands");
+          setStrategy(StrategyTypeEnum.MOMO);
+        } else if (data.strategy == StrategyTypeEnum.crossover) {
+          setStrategyType("EMA Crossover");
+          setStrategy(StrategyTypeEnum.crossover);
         } else if (data.strategy == StrategyTypeEnum.RSI) {
           setStrategyType("EMA ,RSI");
+          setStrategy(StrategyTypeEnum.RSI);
         } else if (data.strategy == StrategyTypeEnum.RSI) {
           setStrategyType("EMA and Vwap");
+          setStrategy(StrategyTypeEnum.VWAP);
         }
         const {
           data: symbolData,
@@ -130,7 +136,7 @@ const Page = ({ params }: { params: { id: string } }) => {
           exchange: exchange,
           targetPercentage: Number(targetPercentage),
           stopLossPercentage: Number(stopLossPercentage),
-          strategyId: 1,
+          strategy: strategy,
         }
       );
 
@@ -159,6 +165,7 @@ const Page = ({ params }: { params: { id: string } }) => {
     await axios.post(`${BACKEND_URL}/api/strategy/stopDeployment`, {
       strategyId: params.id,
     });
+    setLiveStatus(false);
   }
 
   async function deployStrategyHandler(): Promise<void> {
@@ -168,15 +175,39 @@ const Page = ({ params }: { params: { id: string } }) => {
       return;
     }
     if (symbolId == "" || exchange == "") {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "Please select a symbol",
+        duration: 5000,
+      });
       return;
     }
     if (strategyType == "") {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "Please select a strategy",
+        duration: 5000,
+      });
       return;
     }
     if (targetPercentage == "" || stopLossPercentage == "") {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "Please enter a valid target and stop loss percentage",
+        duration: 5000,
+      });
       return;
     }
     if (quantity == 0 || quantity == undefined) {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "Please enter a valid quantity",
+        duration: 5000,
+      });
       return;
     }
     const { data, status } = await axios.post(
@@ -186,6 +217,7 @@ const Page = ({ params }: { params: { id: string } }) => {
         symbolId: symbolId,
         exchange: exchange,
         strategyType: strategyType,
+        strategy: strategy,
         targetPercentage: Number(targetPercentage),
         stopLossPercentage: Number(stopLossPercentage),
         quantity: quantity,
@@ -240,179 +272,198 @@ const Page = ({ params }: { params: { id: string } }) => {
     }
   }
 
+  function handleStrategyTypeChange(value: string): void {
+    setStrategyType(value);
+    if (value == "Momo") {
+      setStrategy(StrategyTypeEnum.MOMO);
+    } else if (value == "EMA Crossover") {
+      setStrategy(StrategyTypeEnum.crossover);
+    } else if (value == "EMA, RSI") {
+      setStrategy(StrategyTypeEnum.RSI);
+    } else if (value == "EMA and Vwap") {
+      setStrategy(StrategyTypeEnum.VWAP);
+    }
+  }
   return (
-    <MaxWidthrapper className={"px-0 md:px-0"}>
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <div className="relative text-xl h-full flex-col p-5 ">
-          <div className="text-4xl font-bold pb-8">Deploy Strategy</div>
-          <div className="flex items-center gap-5 p-2">
-            <div className="text-lg font-medium">Symbol :</div>
-            <DialogTrigger>
-              <div className="text-base border-2 text-center rounded-sm border-gray-200 px-3 py-0.5 min-w-[100px] min-h-[30px] hover:bg-gray-100 cursor-pointer">
-                {symbol}
-              </div>
-            </DialogTrigger>
-            <div className="text-lg font-medium">Strategy :</div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div className="text-base border-2 text-center rounded-sm border-gray-200 px-3 py-0.5 min-w-[100px] min-h-[30px] hover:bg-gray-100 cursor-pointer">
-                  {strategyType}
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 min-w-[100px] min-h-[30px]">
-                <DropdownMenuLabel>Strategy</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuRadioGroup
-                  value={strategyType}
-                  onValueChange={setStrategyType}
-                >
-                  <DropdownMenuRadioItem value="Momo">
-                    Momo
-                  </DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="EMA, MACD, and Bollinger Bands">
-                    EMA, MACD, and Bollinger Bands
-                  </DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="EMA, RSI">
-                    EMA, RSI
-                  </DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="EMA and Vwap">
-                    EMA and Vwap
-                  </DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <div className="text-lg font-medium">Quantity :</div>
-            <input
-              className={`border-2 text-center text-base rounded-sm border-gray-200 px-3 py-0.5 w-[100px] h-[30px]`}
-              type="text"
-              value={quantity}
-              onChange={handleQuantityChange}
-              placeholder=""
-            />
-          </div>
-
-          <div className="flex items-center gap-5 p-2">
-            <div className="text-lg font-medium">Target (%) :</div>
-            <input
-              className={`border-2 text-center rounded-sm border-gray-200 px-3 py-0.5 w-[100px] h-[30px] text-base`}
-              type="text"
-              value={targetPercentage}
-              onChange={handleTargetPercentageChange}
-              placeholder=""
-            />
-            <div className="text-lg font-medium">Stop Loss (%) :</div>
-            <input
-              className={`border-2 text-center rounded-sm border-gray-200 px-3 py-0.5 w-[100px] h-[30px] text-base`}
-              type="text"
-              value={stopLossPercentage}
-              onChange={handleStopLossPercentageChange}
-              placeholder=""
-            />
-          </div>
-          {liveStatus ? (
-            <Button
-              variant="destructive"
-              className="mt-5"
-              onClick={stopDeployStrategyHandler}
-            >
-              Stop Deployment
-            </Button>
-          ) : (
-            <Button
-              variant="default"
-              className="mt-5"
-              onClick={deployStrategyHandler}
-            >
-              Deploy Strategy
-            </Button>
-          )}
-        </div>
-        <Separator />
-        <div className="h-full flex-col w-full">
-          <div className="flex justify-between w-full  align-middle">
-            <div className="text-4xl font-bold p-5">Backtest</div>
-            <div className="flex gap-5 align-middle items-center">
-              <Label className="text-l p-2">Total Trades :</Label>
-              <Label className="text-l w-100 border-2 rounded p-4">
-                {totalTrades}
-              </Label>
-              <Label className="text-l p-2">Total Profit Trades :</Label>
-              <Label className="text-l w-100 border-2 rounded p-4">
-                {totalProfitTrades}
-              </Label>
-              <Label className="text-l p-2">Total Loss Trades :</Label>
-              <Label className="text-l w-100 border-2 rounded p-4">
-                {totalLossTrades}
-              </Label>
-              <Button
-                onClick={() => mutate()}
-                variant="default"
-                className="mr-10"
-              >
-                Run Backtest
-              </Button>
-            </div>
-          </div>
-          <div className="w-full h-[60vh] flex justify-start self-start items-start">
-            {
-              <BacktestChart
-                symbol={symbol}
-                data={backtestData}
-                strategyType={StrategyTypeEnum.RSI}
-              ></BacktestChart>
-            }
-          </div>
-        </div>
-        <DialogContent className="px-0 max-w-none w-[80vh] m-0">
-          <DialogHeader className="p-1">
-            <DialogTitle>Search Symbol</DialogTitle>
-          </DialogHeader>
-          <Input
-            value={symbolQuery}
-            onChange={(e) => setSymbolQuery(e.target.value)}
-            className="rounded-none focus-visible:ring-offset-0 focus-visible:ring-0 py-1 my-0"
-            placeholder="Symbol name"
-          />
-          <ScrollArea className="h-[50vh]">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px]">Symbol</TableHead>
-                  <TableHead>Comapny Name</TableHead>
-                  <TableHead>Exchange</TableHead>
-                  <TableHead className="text-right"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filterSymbolsLoading ? (
-                  <TableRow>
-                    <TableCell className="font-medium">Loading...</TableCell>
-                  </TableRow>
-                ) : (
-                  filteredSymbolsList?.map((symbol) => (
-                    <TableRow
-                      key={symbol.id}
-                      onClick={() => {
-                        setSymbolId(symbol.id);
-                        setExchange(symbol.exchange!);
-                        setSymbol(symbol.symbol);
-                        setDialogOpen(false);
-                      }}
+    <>
+      <div className="flex justify-center items-start">
+        <Nav />
+        <MaxWidthrapper className={"px-0 md:px-0"}>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <div className="relative text-xl h-full flex-col p-5 ">
+              <div className="text-4xl font-bold pb-8">Deploy Strategy</div>
+              <div className="flex items-center gap-5 p-2">
+                <div className="text-lg font-medium">Symbol :</div>
+                <DialogTrigger>
+                  <div className="text-base border-2 text-center rounded-sm border-gray-200 px-3 py-0.5 min-w-[100px] min-h-[30px] hover:bg-gray-100 cursor-pointer">
+                    {symbol}
+                  </div>
+                </DialogTrigger>
+                <div className="text-lg font-medium">Strategy :</div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <div className="text-base border-2 text-center rounded-sm border-gray-200 px-3 py-0.5 min-w-[100px] min-h-[30px] hover:bg-gray-100 cursor-pointer">
+                      {strategyType}
+                    </div>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 min-w-[100px] min-h-[30px]">
+                    <DropdownMenuLabel>Strategy</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuRadioGroup
+                      value={strategyType}
+                      onValueChange={handleStrategyTypeChange}
                     >
-                      <TableCell className="font-medium">
-                        {symbol.symbol}
-                      </TableCell>
-                      <TableCell>{symbol.security_name}</TableCell>
-                      <TableCell>{symbol.exchange}</TableCell>
+                      <DropdownMenuRadioItem value="EMA 9/20">
+                        EMA 9/20
+                      </DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="EMA Crossover">
+                        EMA Crossover
+                      </DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="EMA, RSI">
+                        EMA, RSI
+                      </DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="EMA and Vwap">
+                        EMA and Vwap
+                      </DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <div className="text-lg font-medium">Quantity :</div>
+                <input
+                  className={`border-2 text-center text-base rounded-sm border-gray-200 px-3 py-0.5 w-[100px] h-[30px]`}
+                  type="text"
+                  value={quantity}
+                  onChange={handleQuantityChange}
+                  placeholder=""
+                />
+              </div>
+
+              <div className="flex items-center gap-5 p-2">
+                <div className="text-lg font-medium">Target (%) :</div>
+                <input
+                  className={`border-2 text-center rounded-sm border-gray-200 px-3 py-0.5 w-[100px] h-[30px] text-base`}
+                  type="text"
+                  value={targetPercentage}
+                  onChange={handleTargetPercentageChange}
+                  placeholder=""
+                />
+                <div className="text-lg font-medium">Stop Loss (%) :</div>
+                <input
+                  className={`border-2 text-center rounded-sm border-gray-200 px-3 py-0.5 w-[100px] h-[30px] text-base`}
+                  type="text"
+                  value={stopLossPercentage}
+                  onChange={handleStopLossPercentageChange}
+                  placeholder=""
+                />
+              </div>
+              {liveStatus ? (
+                <Button
+                  variant="destructive"
+                  className="mt-5"
+                  onClick={stopDeployStrategyHandler}
+                >
+                  Stop Deployment
+                </Button>
+              ) : (
+                <Button
+                  variant="default"
+                  className="mt-5"
+                  onClick={deployStrategyHandler}
+                >
+                  Deploy Strategy
+                </Button>
+              )}
+            </div>
+            <Separator />
+            <div className="h-full flex-col w-full">
+              <div className="flex justify-between w-full  align-middle">
+                <div className="text-4xl font-bold p-5">Backtest</div>
+                <div className="flex gap-5 align-middle items-center">
+                  <Label className="text-l p-2">Total Trades :</Label>
+                  <Label className="text-l w-100 border-2 rounded p-4">
+                    {totalTrades}
+                  </Label>
+                  <Label className="text-l p-2">Total Profit Trades :</Label>
+                  <Label className="text-l w-100 border-2 rounded p-4">
+                    {totalProfitTrades}
+                  </Label>
+                  <Label className="text-l p-2">Total Loss Trades :</Label>
+                  <Label className="text-l w-100 border-2 rounded p-4">
+                    {totalLossTrades}
+                  </Label>
+                  <Button
+                    onClick={() => mutate()}
+                    variant="default"
+                    className="mr-10"
+                  >
+                    Run Backtest
+                  </Button>
+                </div>
+              </div>
+              <div className="w-full h-[60vh] flex justify-start self-start items-start">
+                {
+                  <BacktestChart
+                    symbol={symbol}
+                    data={backtestData}
+                    strategyType={strategy!}
+                  ></BacktestChart>
+                }
+              </div>
+            </div>
+            <DialogContent className="px-0 max-w-none w-[80vh] m-0">
+              <DialogHeader className="p-1">
+                <DialogTitle>Search Symbol</DialogTitle>
+              </DialogHeader>
+              <Input
+                value={symbolQuery}
+                onChange={(e) => setSymbolQuery(e.target.value)}
+                className="rounded-none focus-visible:ring-offset-0 focus-visible:ring-0 py-1 my-0"
+                placeholder="Symbol name"
+              />
+              <ScrollArea className="h-[50vh]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">Symbol</TableHead>
+                      <TableHead>Comapny Name</TableHead>
+                      <TableHead>Exchange</TableHead>
+                      <TableHead className="text-right"></TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
-    </MaxWidthrapper>
+                  </TableHeader>
+                  <TableBody>
+                    {filterSymbolsLoading ? (
+                      <TableRow>
+                        <TableCell className="font-medium">
+                          Loading...
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredSymbolsList?.map((symbol) => (
+                        <TableRow
+                          key={symbol.id}
+                          onClick={() => {
+                            setSymbolId(symbol.id);
+                            setExchange(symbol.exchange!);
+                            setSymbol(symbol.symbol);
+                            setDialogOpen(false);
+                          }}
+                        >
+                          <TableCell className="font-medium">
+                            {symbol.symbol}
+                          </TableCell>
+                          <TableCell>{symbol.security_name}</TableCell>
+                          <TableCell>{symbol.exchange}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
+        </MaxWidthrapper>
+      </div>
+    </>
   );
 };
 

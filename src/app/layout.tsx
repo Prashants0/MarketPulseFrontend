@@ -30,12 +30,8 @@ export default function RootLayout({
       >
         <QueryClientProviderWrapper>
           <SymbolListWrapper>
-            {/* <Navbar /> */}
             <Toaster />
-            <div className="flex items-start justify-center h-full">
-              <Nav />
-              {children}
-            </div>
+            <div className="h-full">{children}</div>
           </SymbolListWrapper>
         </QueryClientProviderWrapper>
       </body>
