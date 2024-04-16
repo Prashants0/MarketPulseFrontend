@@ -38,6 +38,7 @@ import { OrderType } from "./components/holding/components/orders";
 import { useFyersSocketState } from "../state/fyers-socket";
 import { Nav } from "@/components/Nav";
 import BuySellButton from "./components/buySellButton";
+import { toast } from "sonner";
 
 export default function Dashboard() {
   const { user, setUser } = useUser();
@@ -83,7 +84,13 @@ export default function Dashboard() {
         fyersSocket.on("connect", () => {
           console.log("connected");
         });
-        return;
+        fyersSocket.on("live-trade", (message) => {
+          console.log("live-trade");
+          console.log(message);
+          toast("Live Trade", {
+            description: `Symbol :${message.symbol} \n Type:${message.typeName} \n Quantity: ${message.quantity}`,
+          });
+        });
       }
     },
     refetchOnWindowFocus: false,

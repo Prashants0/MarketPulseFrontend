@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
 import QueryClientProviderWrapper from "@/components/QueryClientProviderWrapper";
 import SymbolListWrapper from "@/components/SymbolListWrapper";
 import { Nav } from "@/components/Nav";
@@ -31,6 +32,7 @@ export default function RootLayout({
         <QueryClientProviderWrapper>
           <SymbolListWrapper>
             <Toaster />
+            <SonnerToaster />
             <div className="h-full">{children}</div>
           </SymbolListWrapper>
         </QueryClientProviderWrapper>
